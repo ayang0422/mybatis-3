@@ -301,6 +301,11 @@ public final class MappedStatement {
     return resultSets;
   }
 
+  /**
+   * 传入参数，返回完整的sql
+   * @param parameterObject
+   * @return
+   */
   public BoundSql getBoundSql(Object parameterObject) {
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();

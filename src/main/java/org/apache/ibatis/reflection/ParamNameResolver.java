@@ -145,6 +145,7 @@ public class ParamNameResolver {
 
   /**
    * Wrap to a {@link ParamMap} if object is {@link Collection} or array.
+   * 将Collection类型或者数组类型转化成ParaMap类型
    *
    * @param object a parameter object
    * @param actualParamName an actual parameter name

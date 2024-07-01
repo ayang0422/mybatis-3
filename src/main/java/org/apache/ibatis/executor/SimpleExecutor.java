@@ -32,6 +32,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 每执行一次update或select，就开启一个Statement对象，用完立刻关闭 Statement对象。
  * @author Clinton Begin
  */
 public class SimpleExecutor extends BaseExecutor {

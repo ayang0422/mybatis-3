@@ -55,6 +55,7 @@ public class ManagedTransactionFactory implements TransactionFactory {
     // Silently ignores autocommit and isolation level, as managed transactions are entirely
     // controlled by an external manager.  It's silently ignored so that
     // code remains portable between managed and unmanaged configurations.
+    // 静默忽略自动提交和隔离级别，因为托管事务完全由外部管理器控制。它被静默忽略，以便代码在托管和非托管配置之间保持可移植性。
     return new ManagedTransaction(ds, level, closeConnection);
   }
 }

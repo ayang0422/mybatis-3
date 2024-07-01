@@ -36,6 +36,11 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 执行update(没有select，JDBC 批处理不支持select)，
+ * 将所有sql都添加到批处理中(addBatch())，等待统一执行(executeBatch())，
+ * 它缓存了多个Statement对象，每个 Statement对象都是addBatch()完毕后，等待逐一执行executeBatch()批处理。
+ * 与 JDBC 批处理相同。
+ *
  * @author Jeff Butler
  */
 public class BatchExecutor extends BaseExecutor {

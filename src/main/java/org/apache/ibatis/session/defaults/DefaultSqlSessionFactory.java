@@ -44,6 +44,8 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
   @Override
   public SqlSession openSession() {
+    // configuration.getDefaultExecutorType() ---> ExecutorType.SIMPLE
+    // 从数据源中获取一个sqlSession
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
   }
 
@@ -87,18 +89,29 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 从数据源中打开一个session
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
       final Environment environment = configuration.getEnvironment();
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 通过事务工厂产生一个事务
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 生成一个执行器 默认情况下是一个代理的cacheExecutor
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 返回一个默认的sqlSession
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
       throw ExceptionFactory.wrapException("Error opening session.  Cause: " + e, e);
     } finally {
+      // 重置错误内容
       ErrorContext.instance().reset();
     }
   }
@@ -125,6 +138,12 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 如果环境中没有配置事务工厂，直接返回一个ManagedTransactionFactory
+   * 否则的话按照环境配置的事务工厂返回
+   * @param environment
+   * @return
+   */
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
     if (environment == null || environment.getTransactionFactory() == null) {
       return new ManagedTransactionFactory();

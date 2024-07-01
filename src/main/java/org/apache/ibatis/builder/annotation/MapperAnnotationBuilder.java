@@ -118,7 +118,9 @@ public class MapperAnnotationBuilder {
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+      // 处理cacheNamespace
       parseCache();
+      // 处理cacheNamespaceRef
       parseCacheRef();
       for (Method method : type.getMethods()) {
         if (!canHaveStatement(method)) {

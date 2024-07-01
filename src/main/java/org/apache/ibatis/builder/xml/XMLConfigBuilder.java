@@ -48,6 +48,8 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.type.JdbcType;
 
 /**
+ * config xml 构建工具
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -92,31 +94,62 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public Configuration parse() {
+    // 首先判断有没有解析过配置文件，只有没有解析过才允许解析。
     if (parsed) {
       throw new BuilderException("Each XMLConfigBuilder can only be used once.");
     }
     parsed = true;
-    parseConfiguration(parser.evalNode("/configuration"));
+    // mybatis配置文件解析的主流程
+    parseConfiguration(parser.evalNode("/configuration"));//将配置文件转化成Configuration对象
     return configuration;
   }
 
+  /**
+   * 构建Configuration
+   * @param root
+   */
   private void parseConfiguration(XNode root) {
     try {
       // issue #117 read properties first
+      // 首先读取properties
       propertiesElement(root.evalNode("properties"));
+      // 读取所有的setting
       Properties settings = settingsAsProperties(root.evalNode("settings"));
+      // 指定 VFS 的实现 -- VFS 是一个简单的工具，用来处理类路径资源（class path resources），
       loadCustomVfs(settings);
+      // 指定 MyBatis 所用日志的具体实现，未指定时将自动查找。
       loadCustomLogImpl(settings);
+      // 读取类型别名 -- 类型别名可为 Java 类型设置一个缩写名字。 它仅用于 XML 配置，意在降低冗余的全限定类名书写。
       typeAliasesElement(root.evalNode("typeAliases"));
+      // 读取插件
       pluginElement(root.evalNode("plugins"));
+      // 读取对象工厂
+      // 每次 MyBatis 创建结果对象的新实例时，它都会使用一个对象工厂（ObjectFactory）实例来完成实例化工作。
+      // 默认的对象工厂需要做的仅仅是实例化目标类，要么通过默认无参构造方法，要么通过存在的参数映射来调用带有参数的构造方法。
+      // 如果想覆盖对象工厂的默认行为，可以通过创建自己的对象工厂来实现。
       objectFactoryElement(root.evalNode("objectFactory"));
+      // 读取对象包装工厂  todo 去了解作用是什么
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      // 读取反射工厂
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      // 读取环境
+      // MyBatis 可以配置成适应多种环境，这种机制有助于将 SQL 映射应用于多种数据库之中， 现实情况下有多种理由需要这么做。
+      // 例如，开发、测试和生产环境需要有不同的配置；或者想在具有相同 Schema 的多个生产数据库中使用相同的 SQL 映射。
       environmentsElement(root.evalNode("environments"));
+      // 数据库厂商标识
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+      // 读取类型处理器
+      // MyBatis 在设置预处理语句（PreparedStatement）中的参数或从结果集中取出一个值时，
+      // 都会用类型处理器将获取到的值以合适的方式转换成 Java 类型。
+      // mybatis中也会默认存在很多的默认的类型处理器
       typeHandlerElement(root.evalNode("typeHandlers"));
+      // 读取映射器
+      // 既然 MyBatis 的行为已经由上述元素配置完了，我们现在就要来定义 SQL 映射语句了。
+      // 但首先，我们需要告诉 MyBatis 到哪里去找到这些语句。
+      // 在自动查找资源方面，Java 并没有提供一个很好的解决方案，所以最好的办法是直接告诉 MyBatis 到哪里去找映射文件。
+      // 你可以使用相对于类路径的资源引用，或完全限定资源定位符（包括 file:/// 形式的 URL），或类名和包名等。
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -362,29 +395,41 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析mapper标签
+   * @param parent
+   * @throws Exception
+   */
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        // 扫描包下的所有的接口
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
         } else {
+          // 以下代码是解析mapper标签的三种方式，resource、url、class，这三个属性是互斥的，不能同时出现
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
+          // <mapper resource="a/b/c.xml"/>读取xml映射器并解析
           if (resource != null && url == null && mapperClass == null) {
             ErrorContext.instance().resource(resource);
             try(InputStream inputStream = Resources.getResourceAsStream(resource)) {
               XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments());
+              // 解析mapper文件
               mapperParser.parse();
             }
           } else if (resource == null && url != null && mapperClass == null) {
+            // 读取url类型映射器并解析
             ErrorContext.instance().resource(url);
             try(InputStream inputStream = Resources.getUrlAsStream(url)){
               XMLMapperBuilder mapperParser = new XMLMapperBuilder(inputStream, configuration, url, configuration.getSqlFragments());
+              // 解析mapper文件
               mapperParser.parse();
             }
           } else if (resource == null && url == null && mapperClass != null) {
+            // 读取class类型的映射器并解析
             Class<?> mapperInterface = Resources.classForName(mapperClass);
             configuration.addMapper(mapperInterface);
           } else {

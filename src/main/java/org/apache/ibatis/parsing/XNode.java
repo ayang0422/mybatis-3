@@ -113,6 +113,15 @@ public class XNode {
     return xpathParser.evalNodes(node, expression);
   }
 
+  /**
+   * 所有的root.evalNode底层都是调用XML DOM的evaluate()方法，
+   * 根据给定的节点表达式来计算指定的 XPath 表达式，
+   * 并且返回一个XPathResult对象，
+   * 返回类型在Node.evalNode()方法中均被指定为NODE。
+   *
+   * @param expression
+   * @return
+   */
   public XNode evalNode(String expression) {
     return xpathParser.evalNode(node, expression);
   }

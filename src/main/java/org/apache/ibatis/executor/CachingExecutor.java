@@ -33,6 +33,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 装饰者模式
+ * 二级缓存的维护者
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -84,7 +86,9 @@ public class CachingExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    // 获取BoundSql对象实例
     BoundSql boundSql = ms.getBoundSql(parameterObject);
+    // 获取缓存的key
     CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
     return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
@@ -92,20 +96,25 @@ public class CachingExecutor implements Executor {
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
       throws SQLException {
+    // 查看是否存在缓存
     Cache cache = ms.getCache();
+    // 存在缓存，尝试从缓存取出数据
     if (cache != null) {
       flushCacheIfRequired(ms);
       if (ms.isUseCache() && resultHandler == null) {
         ensureNoOutParams(ms, boundSql);
         @SuppressWarnings("unchecked")
         List<E> list = (List<E>) tcm.getObject(cache, key);
+        // 缓存中没有取到数据，就执行SQL从数据库查询数据
         if (list == null) {
           list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+          // 放置缓存
           tcm.putObject(cache, key, list); // issue #578 and #116
         }
         return list;
       }
     }
+    // 不存在缓存，直接查询数据库并返回
     return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
   }
 

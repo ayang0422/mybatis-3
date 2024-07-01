@@ -227,20 +227,30 @@ public class XPathParser {
     }
   }
 
+  /**
+   * 将InputStream解析成Document对象
+   * @param inputSource
+   * @return
+   */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       factory.setValidating(validation);
-
+      // 设置由本工厂创建的解析器是否支持xml命名空间
       factory.setNamespaceAware(false);
+      // 设置忽略注释
       factory.setIgnoringComments(true);
+      // 设置是否忽略元素内容中的空格
       factory.setIgnoringElementContentWhitespace(false);
+      // 设置是否将CDATA节点转化成Text节点
       factory.setCoalescing(false);
+      // 设置是否展开实体引用节点，这里应该是sql片段引用的关键
       factory.setExpandEntityReferences(true);
 
       DocumentBuilder builder = factory.newDocumentBuilder();
+      // 设置mybatis xml文档节点的解析器，也就是上面的XMLMapperEntityResolver
       builder.setEntityResolver(entityResolver);
       builder.setErrorHandler(new ErrorHandler() {
         @Override

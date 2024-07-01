@@ -470,14 +470,24 @@ public abstract class AbstractSQL<T> {
     return sb.toString();
   }
 
+  /**
+   * 拼接器
+   */
   private static class SafeAppendable {
+    /**
+     * 主串
+     */
     private final Appendable appendable;
+    /**
+     * 主串是否为空
+     */
     private boolean empty = true;
 
     public SafeAppendable(Appendable a) {
       super();
       this.appendable = a;
     }
+
 
     public SafeAppendable append(CharSequence s) {
       try {
@@ -497,6 +507,9 @@ public abstract class AbstractSQL<T> {
 
   }
 
+  /**
+   * 表示一条完整的sql语句
+   */
   private static class SQLStatement {
 
     public enum StatementType {
@@ -553,9 +566,19 @@ public abstract class AbstractSQL<T> {
     List<String> lastList = new ArrayList<>();
     List<String> columns = new ArrayList<>();
     List<List<String>> valuesList = new ArrayList<>();
+    /**
+     * 是否去重
+     */
     boolean distinct;
+    /**
+     * 结果偏移量
+     */
     String offset;
+    /**
+     * 结果约束量
+     */
     String limit;
+    // 结果约束策略
     LimitingRowsStrategy limitingRowsStrategy = LimitingRowsStrategy.NOP;
 
     public SQLStatement() {
